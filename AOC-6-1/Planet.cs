@@ -6,7 +6,7 @@ namespace AOC_6_1
     {
         public string Name { get; set; }
 
-        public IEnumerable<Planet> OrbitalPlanets { get; set; }
+        public ICollection<Planet> OrbitalPlanets { get; set; }
         public Planet Orbits { get; set; }
 
     }

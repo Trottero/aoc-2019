@@ -6,4 +6,16 @@
     <RootNamespace>AOC_6_1</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="D6test.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="D6Santa.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="D6Puzzle.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
