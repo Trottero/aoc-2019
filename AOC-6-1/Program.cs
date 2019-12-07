@@ -21,7 +21,7 @@ namespace AOC_6_1
 					parentPlanet = new Planet
 					{
 						Name = r[0],
-						OrbitalPlanets = new List<Planet>()
+						Moons = new List<Planet>()
 					};
 					planets.Add(parentPlanet);
 				};
@@ -30,7 +30,7 @@ namespace AOC_6_1
 					childPlanet = new Planet
 					{
 						Name = r[1],
-						OrbitalPlanets = new List<Planet>(),
+						Moons = new List<Planet>(),
 						Orbits = parentPlanet
 					};
 					planets.Add(childPlanet);
@@ -39,7 +39,7 @@ namespace AOC_6_1
 				{
 					childPlanet.Orbits = parentPlanet;
 				}
-				parentPlanet.OrbitalPlanets.Add(childPlanet);
+				parentPlanet.Moons.Add(childPlanet);
 
 				return new Planet();
 			}).ToList();
@@ -52,11 +52,11 @@ namespace AOC_6_1
 
 		static int CalculateOrbitNumber(Planet planet, int currentNumber)
 		{
-			if (!planet.OrbitalPlanets.Any())
+			if (!planet.Moons.Any())
 			{
 				return currentNumber;
 			}
-			return planet.OrbitalPlanets.Select(r => CalculateOrbitNumber(r, currentNumber + 1)).Sum() + currentNumber;
+			return planet.Moons.Select(r => CalculateOrbitNumber(r, currentNumber + 1)).Sum() + currentNumber;
 		}
 
 
@@ -69,7 +69,7 @@ namespace AOC_6_1
 			}
 
 			// I guess it isn't it chief
-			foreach (var childPlanet in currentPlanet.OrbitalPlanets)
+			foreach (var childPlanet in currentPlanet.Moons)
 			{
 				var x = getPathToSantaRecurisve(childPlanet, santaPlanet, currentNumber + 1, false); // Dont delete them, that makes em angry
 				if (x != -1)
@@ -80,7 +80,7 @@ namespace AOC_6_1
 
 			if (shouldDelete) // Delete the current node if we didnt find it.
 			{
-				currentPlanet.Orbits.OrbitalPlanets.Remove(currentPlanet);
+				currentPlanet.Orbits.Moons.Remove(currentPlanet);
 				return getPathToSantaRecurisve(currentPlanet.Orbits, santaPlanet, currentNumber + 1);
 			}
 
