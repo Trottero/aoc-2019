@@ -9,7 +9,7 @@ namespace AOC_9_1
 	{
 		static void Main(string[] args)
 		{
-			var max = 0;
+			long max = 0;
 
 			var range = Enumerable.Range(5, 5).ToList();
 			foreach (var i in range)
@@ -30,7 +30,7 @@ namespace AOC_9_1
 							rangem.Remove(l);
 							foreach (var m in rangem)
 							{
-								AmplifierArray amplifierArray = new AmplifierArray(new[] { i, j, k, l, m }.ToList());
+								AmplifierArray amplifierArray = new AmplifierArray(new[] { 9, 7, 8, 5, 6 }.ToList());
 								var res = amplifierArray.Amplify(0);
 								if (res > max)
 								{

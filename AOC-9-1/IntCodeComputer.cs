@@ -6,177 +6,173 @@ using System.Threading;
 
 namespace AOC_9_1
 {
-	public class IntCodeComputer
-	{
-		private static readonly int[] amountofArgs = { 0, 3, 3, 1, 1, 2, 2, 3, 3 };
-		protected object thisLock = new object();
+    public class IntCodeComputer
+    {
+        private static readonly int[] AmountofArgs = { 0, 3, 3, 1, 1, 2, 2, 3, 3, 1, 1 };
+        protected object thisLock = new object();
 
-		private string input = "";
-		private int[] computerMemory;
-		public ICollection<int> InputVariables { get; set; } = new List<int> { };
-		private int InputIndex = 0;
-		public int position { get; set; } = 0;
+        private readonly string _input;
+        private long[] _computerMemory;
 
-		public int ProgramOutput { get; set; } = -1;
+        public ICollection<long> InputVariables { get; set; } = new List<long> { };
+        public long Position { get; set; } = 0;
 
-		public IntCodeComputer(string program)
-		{
-			input = program;
-			ClearMemory();
-		}
+        public long ProgramOutput { get; set; } = -1;
 
-		public void StartComputer()
-		{
+        public IntCodeComputer(string program)
+        {
+            _input = program;
+            ClearMemory();
+        }
 
-			// Start the execution of the program on pos 0
-			ExecuteInstruction(0);
-		}
+        public void StartComputer()
+        {
 
-		public void ClearMemory()
-		{
-			computerMemory = input.Split(',').Select(int.Parse).ToArray();
-		}
+            // Start the execution of the program on pos 0
+            ExecuteInstruction(0);
+        }
 
-		public void ExecuteInstruction(int pos)
-		{
-			position = pos;
-			int skippings = 0;
-			// Expected to be atleast 2 numbers
-			var instruction = computerMemory[pos].ToString();
-			var instructionCode = int.Parse(instruction);
-			IList<char> parameterSettings = new List<char>();
-			if (instruction.Length > 1)
-			{
-				instructionCode = int.Parse(instruction.Substring(instruction.Length - 2, 2));
-				parameterSettings = instruction.Substring(0, instruction.Length - 2).ToCharArray().ToList();
-			}
+        public void ClearMemory()
+        {
+            _computerMemory = _input.Split(',').Select(long.Parse).ToArray();
+        }
 
-			if (instructionCode == 99)
-			{
-				return;
-			}
+        public void ExecuteInstruction(long pos)
+        {
+            Position = pos;
+            long skippings = 0;
+            // Expected to be at least 2 numbers
+            var instruction = _computerMemory[pos].ToString();
+            var instructionCode = int.Parse(instruction);
+            IList<int> parameterSettings = new List<int>();
 
-			for (int i = parameterSettings.Count(); i < amountofArgs[instructionCode]; i++)
-			{
-				parameterSettings.Insert(0, '0');
-			}
 
-			parameterSettings = parameterSettings.Reverse().ToArray();
+            if (instruction.Length > 1)
+            {
+                instructionCode = int.Parse(instruction.Substring(instruction.Length - 2, 2));
+                parameterSettings = instruction.Substring(0, instruction.Length - 2)
+                    .ToCharArray()
+                    .Select(r => int.Parse(r.ToString()))
+                    .ToList();
+            }
 
-			if (amountofArgs[instructionCode] == 1) // in and output
-			{
-				if (instructionCode == 3)
-				{
-					var shouldLoop = true;
-					while (shouldLoop) // Checks for new instructions
-					{
-						lock (thisLock)
-						{
-							shouldLoop = !InputVariables.Any();
-						}
-					}
-					computerMemory[computerMemory[pos + 1]] = InputVariables.First(); // Take the first variable and do something with it.
-					InputVariables.Remove(InputVariables.First()); // Remove the consumed variable, this way the next one is ready for the queue.
-				}
+            if (instructionCode == 99)
+            {
+                return;
+            }
 
-				if (instructionCode == 4)
-				{
-					if (parameterSettings[0] == '1')
-					{
-						SendOutput(computerMemory[pos + 1]);
-					}
-					else
-					{
-						SendOutput(computerMemory[computerMemory[pos + 1]]);
-					}
-				}
-				skippings = 2;
-			}
+            for (var i = parameterSettings.Count; i < AmountofArgs[instructionCode]; i++)
+            {
+                parameterSettings.Insert(0, 0);
+            }
+            parameterSettings = parameterSettings.Reverse().ToArray();
 
-			if (amountofArgs[instructionCode] == 2 || amountofArgs[instructionCode] == 3) // Jump functions
-			{
-				int parm1 = 0;
-				if (parameterSettings[0] == '1')
-				{
-					parm1 = computerMemory[pos + 1];
-				}
-				else
-				{
-					parm1 = computerMemory[computerMemory[pos + 1]];
-				}
+            if (instructionCode == 3)
+            {
+                var shouldLoop = true;
+                while (shouldLoop) // Checks for new instructions
+                {
+                    lock (thisLock)
+                    {
+                        shouldLoop = !InputVariables.Any();
+                    }
+                }
 
-				int parm2 = 0;
-				if (parameterSettings[1] == '1')
-				{
-					parm2 = computerMemory[pos + 2];
-				}
-				else
-				{
-					parm2 = computerMemory[computerMemory[pos + 2]];
-				}
+                _computerMemory[GetPosition(pos + 1, 0)] = InputVariables.First(); // Take the first variable and do something with it.
+                InputVariables.Remove(InputVariables.First()); // Remove the consumed variable, this way the next one is ready for the queue.
+                skippings = 2;
+            }
 
-				if (instructionCode == 5 || instructionCode == 6)
-				{
-					skippings = 3;
-					if (instructionCode == 5 && parm1 != 0) // Jump 1
-					{
-						skippings = 0;
-						pos = parm2;
-					}
-					if (instructionCode == 6 && parm1 == 0) // Jump 2
-					{
-						skippings = 0;
-						pos = parm2;
-					}
-				}
+            if (instructionCode == 4)
+            {
+                SendOutput(GetValue(pos + 1, parameterSettings[0]));
+                skippings = 2;
+            }
 
-				if (instructionCode == 1) // Adding
-				{
-					computerMemory[computerMemory[pos + 3]] = parm2 + parm1;
-					skippings = 4;
-				}
+            if (instructionCode == 5 || instructionCode == 6)
+            {
+                skippings = 3;
+                if (instructionCode == 5 && GetValue(pos + 1, parameterSettings[0]) != 0) // Jump 1
+                {
+                    skippings = 0;
+                    pos = GetValue(pos + 2, parameterSettings[1]);
+                }
+                if (instructionCode == 6 && GetValue(pos + 1, parameterSettings[0]) == 0) // Jump 2
+                {
+                    skippings = 0;
+                    pos = GetValue(pos + 2, parameterSettings[1]);
+                }
+            }
 
-				if (instructionCode == 2) // Multiple
-				{
-					computerMemory[computerMemory[pos + 3]] = parm2 * parm1;
-					skippings = 4;
-				}
+            if (instructionCode == 1) // Adding
+            {
+                _computerMemory[GetPosition(pos + 3, 0)] = GetValue(pos + 1, parameterSettings[0]) + GetValue(pos + 2, parameterSettings[1]);
+                skippings = 4;
+            }
 
-				if (instructionCode == 7) // Less than
-				{
-					if (parm1 < parm2)
-					{
-						computerMemory[computerMemory[pos + 3]] = 1;
-					}
-					else
-					{
-						computerMemory[computerMemory[pos + 3]] = 0;
-					}
+            if (instructionCode == 2) // Multiple
+            {
+                _computerMemory[GetPosition(pos + 3, 0)] = GetValue(pos + 1, parameterSettings[0]) * GetValue(pos + 2, parameterSettings[1]);
+                skippings = 4;
+            }
 
-					skippings = 4;
-				}
+            if (instructionCode == 7) // Less than
+            {
+                if (GetValue(pos + 1, parameterSettings[0]) < GetValue(pos + 2, parameterSettings[1]))
+                {
+                    _computerMemory[GetPosition(pos + 3, 0)] = 1;
+                }
+                else
+                {
+                    _computerMemory[GetPosition(pos + 3, 0)] = 0;
+                }
 
-				if (instructionCode == 8)
-				{
-					if (parm1 == parm2)
-					{
-						computerMemory[computerMemory[pos + 3]] = 1;
-					}
-					else
-					{
-						computerMemory[computerMemory[pos + 3]] = 0;
-					}
+                skippings = 4;
+            }
 
-					skippings = 4;
-				}
-			}
+            if (instructionCode == 8) // equals
+            {
+                if (GetValue(pos + 1, parameterSettings[0]) == GetValue(pos + 2, parameterSettings[1]))
+                {
+                    _computerMemory[GetPosition(pos + 3, 0)] = 1;
+                }
+                else
+                {
+                    _computerMemory[GetPosition(pos + 3, 0)] = 0;
+                }
 
-			ExecuteInstruction(pos + skippings);
-		}
-		public virtual void SendOutput(int output)
-		{
-			ProgramOutput = output;
-		}
-	}
+                skippings = 4;
+
+            }
+
+            ExecuteInstruction(pos + skippings);
+        }
+
+        public virtual void SendOutput(long output)
+        {
+            ProgramOutput = output;
+        }
+
+        public long GetPosition(long memoryAdress, int parameterMode)
+        {
+            switch (parameterMode)
+            {
+                // Position mode
+                case 0:
+                    return _computerMemory[memoryAdress];
+                // Direct interpretation mode
+                case 1:
+                    return memoryAdress;
+                case 2:
+                    return 0;
+            }
+            return -1;
+        }
+
+        public long GetValue(long memoryAdress, int parameterMode)
+        {
+            return _computerMemory[GetPosition(memoryAdress, parameterMode)];
+        }
+    }
 
 }
