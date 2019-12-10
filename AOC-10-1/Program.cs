@@ -44,8 +44,8 @@ namespace AOC_10_1
                     }
 
                     // Calculate the adj and opposite side to get the hypo
-                    var a = Math.Abs(source.X - astroid.X);
-                    var b = Math.Abs(source.Y - astroid.Y);
+                    var a = source.X - astroid.X;
+                    var b = source.Y - astroid.Y;
                     var c = (float)Math.Sqrt(Math.Pow(a, 2) + Math.Pow(b, 2)); // length of hypo
 
                     var alpha = (float)Math.Atan(b / a);
