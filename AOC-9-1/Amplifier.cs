@@ -17,7 +17,7 @@ namespace AOC_9_1
 
         public override void SendOutput(long x)
         {
-            ProgramOutput = x;
+            ProgramOutput.Add(x);
             NextAmp.AddNewVariable(x);
         }
 
@@ -83,7 +83,7 @@ namespace AOC_9_1
             {
 
             }
-            return _amplifiers.Last().ProgramOutput;
+            return _amplifiers.Last().ProgramOutput.First();
         }
     }
 }

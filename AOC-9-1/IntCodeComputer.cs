@@ -17,9 +17,11 @@ namespace AOC_9_1
         public ICollection<long> InputVariables { get; set; } = new List<long> { };
         public long Position { get; set; } = 0;
 
-        public long ProgramOutput { get; set; } = -1;
+        public ICollection<long> ProgramOutput { get; set; } = new List<long>();
 
         public long RelativeBase { get; set; } = 0;
+
+        public ComputerState State { get; set; } = ComputerState.RUNNING;
 
         public IntCodeComputer(string program)
         {
@@ -31,7 +33,10 @@ namespace AOC_9_1
         {
 
             // Start the execution of the program on pos 0
-            ExecuteInstruction(0);
+            while (State != ComputerState.STOPPED)
+            {
+                ExecuteInstruction();
+            }
         }
 
         public void ClearMemory()
@@ -39,9 +44,9 @@ namespace AOC_9_1
             _computerMemory = _input.Split(',').Select(long.Parse).ToArray();
         }
 
-        public void ExecuteInstruction(long pos)
+        public void ExecuteInstruction()
         {
-            Position = pos;
+            var pos = Position;
             long skippings = 0;
             // Expected to be at least 2 numbers
             var instruction = _computerMemory[pos].ToString();
@@ -60,6 +65,7 @@ namespace AOC_9_1
 
             if (instructionCode == 99)
             {
+                State = ComputerState.STOPPED;
                 return;
             }
 
@@ -80,7 +86,7 @@ namespace AOC_9_1
                     }
                 }
 
-                _computerMemory[GetPosition(1, 0)] = InputVariables.First(); // Take the first variable and do something with it.
+                Memory(GetPosition(1, parameterSettings[0])) = InputVariables.First(); // Take the first variable and do something with it.
                 InputVariables.Remove(InputVariables.First()); // Remove the consumed variable, this way the next one is ready for the queue.
                 skippings = 2;
             }
@@ -108,13 +114,13 @@ namespace AOC_9_1
 
             if (instructionCode == 1) // Adding
             {
-                _computerMemory[GetPosition(3, 0)] = GetValue(1, parameterSettings[0]) + GetValue(2, parameterSettings[1]);
+                Memory(GetPosition(3, parameterSettings[2])) = GetValue(1, parameterSettings[0]) + GetValue(2, parameterSettings[1]);
                 skippings = 4;
             }
 
             if (instructionCode == 2) // Multiple
             {
-                _computerMemory[GetPosition(3, 0)] = GetValue(1, parameterSettings[0]) * GetValue(2, parameterSettings[1]);
+                Memory(GetPosition(3, parameterSettings[2])) = GetValue(1, parameterSettings[0]) * GetValue(2, parameterSettings[1]);
                 skippings = 4;
             }
 
@@ -122,11 +128,11 @@ namespace AOC_9_1
             {
                 if (GetValue(1, parameterSettings[0]) < GetValue(2, parameterSettings[1]))
                 {
-                    _computerMemory[GetPosition(3, 0)] = 1;
+                    Memory(GetPosition(3, parameterSettings[2])) = 1;
                 }
                 else
                 {
-                    _computerMemory[GetPosition(3, 0)] = 0;
+                    Memory(GetPosition(3, parameterSettings[2])) = 0;
                 }
 
                 skippings = 4;
@@ -136,11 +142,11 @@ namespace AOC_9_1
             {
                 if (GetValue(1, parameterSettings[0]) == GetValue(2, parameterSettings[1]))
                 {
-                    _computerMemory[GetPosition(3, 0)] = 1;
+                    Memory(GetPosition(3, parameterSettings[2])) = 1;
                 }
                 else
                 {
-                    _computerMemory[GetPosition(3, 0)] = 0;
+                    Memory(GetPosition(3, parameterSettings[2])) = 0;
                 }
 
                 skippings = 4;
@@ -153,12 +159,14 @@ namespace AOC_9_1
                 skippings = 2;
             }
 
-            ExecuteInstruction(pos + skippings);
+            var b = RelativeBase;
+
+            Position = pos + skippings;
         }
 
         public virtual void SendOutput(long output)
         {
-            ProgramOutput = output;
+            ProgramOutput.Add(output);
         }
 
         public long GetPosition(long parameterOffset, int parameterMode)
@@ -167,19 +175,35 @@ namespace AOC_9_1
             {
                 // Position mode
                 case 0:
-                    return _computerMemory[Position + parameterOffset];
+                    return Memory(Position + parameterOffset);
                 // Direct interpretation mode
                 case 1:
                     return Position + parameterOffset;
                 case 2:
-                    return RelativeBase + _computerMemory[Position + parameterOffset];
+                    return RelativeBase + Memory(Position + parameterOffset);
             }
             return -1;
         }
 
         public long GetValue(long parameterOffset, int parameterMode)
         {
-            return _computerMemory[GetPosition(parameterOffset, parameterMode)];
+            return Memory(GetPosition(parameterOffset, parameterMode));
+        }
+
+        private ref long Memory(long index)
+        {
+            if (index > _computerMemory.Length - 1)
+            {
+                Array.Resize(ref _computerMemory, (int)index + 1);
+            }
+
+            return ref _computerMemory[index];
+        }
+
+        public enum ComputerState
+        {
+            RUNNING,
+            STOPPED
         }
     }
 
