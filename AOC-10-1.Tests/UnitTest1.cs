@@ -25,8 +25,35 @@ namespace AOC_10_1.Tests
             var split = map.Split("\n");
             var astMap = new AstroidMap();
             astMap.FromFile(split);
-            Assert.AreEqual(5.5, astMap.OptimalAstroid.X);
-            Assert.AreEqual(8.5, astMap.OptimalAstroid.Y);
+			var res = astMap.GetAstroidDeletionOrder();
         }
-    }
+
+		[TestMethod]
+		public void TestSample2()
+		{
+			var map = "#.#\n.#.\n#.#";
+			map.Replace("\r", "");
+			var split = map.Split("\n");
+			var astMap = new AstroidMap();
+			astMap.FromFile(split);
+			
+		}
+
+		[TestMethod]
+		public void TestWithRotation()
+		{
+			var map = ".#..##.###...#######\n##.############..##.\n.#.######.########.#\n.###.#######.####.#.\n#####.##.#.##.###.##\n..#####..#.#########\n####################\n#.####....###.#.#.##\n##.#################\n#####.##.###..####..\n..######..##.#######\n####.##.####...##..#\n.#####..#.######.###\n##...#.##########...\n#.##########.#######\n.####.#.###.###.#.##\n....##.##.###..#####\n.#.#.###########.###\n#.#.#.#####.####.###\n###.##.####.##.#..##";
+			map.Replace("\r", "");
+			var split = map.Split("\n");
+			var astMap = new AstroidMap();
+			astMap.FromFile(split);
+			var res = astMap.GetAstroidDeletionOrder();
+			Assert.AreEqual(11.5, res[0].X);
+			Assert.AreEqual(12.5, res[0].Y);
+
+
+			Assert.AreEqual(12.5, res[9].X);
+			Assert.AreEqual(8.5, res[9].Y);
+		}
+	}
 }
