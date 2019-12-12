@@ -10,12 +10,23 @@ namespace AOC_11_1
         private List<HullTile> KnownTiles { get; set; } = new List<HullTile>();
         private HullTile CurrentPosition { get; set; } = new HullTile();
         private Direction Direction { get; set; } = Direction.UP;
-        private int DirectionNum { get; set; } = 0;
+        public int DirectionNum { get; set; } = 0;
 
         private List<int> CommandBuffer { get; set; } = new List<int>();
 
         public HullPaintingRobot(string program) : base(program)
         {
+            var startingpos = new HullTile
+            {
+                Position = new Position
+                {
+                    X = 0,
+                    Y = 0
+                },
+                Color = Color.Black
+            };
+            KnownTiles.Add(startingpos);
+            CurrentPosition = startingpos;
         }
 
         public override void SendOutput(long output)
@@ -54,20 +65,23 @@ namespace AOC_11_1
             Direction = GetDirectionFromNumber(turnDirection);
 
             // Move to the next position
-            var nextHullPos = GetNextRelativeHullPosition(CurrentPosition.Position.Clone(), Direction);
-            
+            var nextHullPos = GetNextRelativeHullPosition(CurrentPosition.Position, Direction);
+
             // Check if the tile exists
             var existingTile = KnownTiles.FirstOrDefault(h =>
-                h.Position.X == CurrentPosition.Position.X && h.Position.Y == CurrentPosition.Position.Y);
+                h.Position.X == nextHullPos.X && h.Position.Y == nextHullPos.Y);
 
-            if (existingTile != null)
+            if (existingTile == null)
             {
-                KnownTiles = KnownTiles.Where(t => t.Position.X != existingTile.Position.X || t.Position.Y != existingTile.Position.Y).ToList();
+                existingTile = new HullTile
+                {
+                    Position = nextHullPos
+                };
+                KnownTiles.Add(existingTile);
             }
-            KnownTiles.Add(new HullTile
-            {
-                Position = nextHullPos.Clone()
-            });
+
+            CurrentPosition = existingTile;
+
         }
         public Position GetNextRelativeHullPosition(Position currentPos, Direction direction)
         {
@@ -80,10 +94,10 @@ namespace AOC_11_1
             switch (direction)
             {
                 case Direction.UP:
-                    nextPosition.Y += 1;
+                    nextPosition.Y -= 1;
                     break;
                 case Direction.DOWN:
-                    nextPosition.Y -= 1;
+                    nextPosition.Y += 1;
                     break;
                 case Direction.LEFT:
                     nextPosition.X -= 1;
@@ -106,7 +120,7 @@ namespace AOC_11_1
                     DirectionNum += 360;
                 }
             }
-            if (DirectionNum == 1)
+            if (turnDirection == 1)
             {
                 DirectionNum += 90;
                 DirectionNum %= 360;
@@ -138,7 +152,7 @@ namespace AOC_11_1
             {
                 return Color.White;
             }
-            return Color.Red;
+            throw new ArgumentException($"number: {number} is not supported!");
         }
 
         public int GetNumberFromColor(Color color)
@@ -161,26 +175,10 @@ namespace AOC_11_1
         public Color Color { get; set; } = Color.Black;
     }
 
-    public class Position : IEquatable<Position>
+    public class Position
     {
         public int X { get; set; }
         public int Y { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            var cast = (Position)obj;
-            return X == cast.X && Y == cast.Y;
-        }
-
-        public bool Equals(Position other)
-        {
-            return X == other.X && Y == other.Y;
-        }
-
-        public override int GetHashCode()
-        {
-            return 0;
-        }
 
         public Position Clone()
         {
