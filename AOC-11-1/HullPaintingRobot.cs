@@ -23,7 +23,7 @@ namespace AOC_11_1
                     X = 0,
                     Y = 0
                 },
-                Color = Color.Black
+                Color = Color.White
             };
             KnownTiles.Add(startingpos);
             CurrentPosition = startingpos;
@@ -167,6 +167,18 @@ namespace AOC_11_1
             }
             return -1;
         }
+        public Bitmap HullToBitMap()
+        {
+            var width = Math.Abs(KnownTiles.Min(r => r.Position.X) - KnownTiles.Max(r => r.Position.X)) + 1;
+            var height = Math.Abs(KnownTiles.Min(r => r.Position.Y) - KnownTiles.Max(r => r.Position.Y)) + 1;
+            var bitmap = new Bitmap(width,height);
+            foreach (var knownTile in KnownTiles)
+            {
+                bitmap.SetPixel(knownTile.Position.X, knownTile.Position.Y, knownTile.Color);
+            }
+            bitmap.Save("day11.bmp");
+            return null;
+        }
     }
 
     public class HullTile
@@ -194,4 +206,6 @@ namespace AOC_11_1
     {
         UP, DOWN, LEFT, RIGHT
     }
+
+
 }
