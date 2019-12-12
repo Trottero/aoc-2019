@@ -7,8 +7,8 @@ namespace AOC_11_1
 {
     public class HullPaintingRobot : IntCodeComputer
     {
-        private Dictionary<Position, HullTile> Dictionary { get; set; } = new Dictionary<Position, HullTile>();
-        private Position CurrentPosition { get; set; } = new Position();
+        private List<HullTile> KnownTiles { get; set; } = new List<HullTile>();
+        private HullTile CurrentPosition { get; set; } = new HullTile();
         private Direction Direction { get; set; } = Direction.UP;
         private int DirectionNum { get; set; } = 0;
 
@@ -16,7 +16,6 @@ namespace AOC_11_1
 
         public HullPaintingRobot(string program) : base(program)
         {
-            Dictionary.Add(CurrentPosition, new HullTile());
         }
 
         public override void SendOutput(long output)
@@ -32,12 +31,12 @@ namespace AOC_11_1
 
         public override long GetInput()
         {
-            return GetNumberFromColor(Dictionary[CurrentPosition].Color);
+            return GetNumberFromColor(CurrentPosition.Color);
         }
 
         public int GetCount()
         {
-            return Dictionary.Keys.Count - 1;
+            return KnownTiles.Count;
         }
 
         public void ProcessMovementCommand(int turnDirection, int colorToPaint)
@@ -49,27 +48,26 @@ namespace AOC_11_1
             // Colortopaint
             // 0: black
             // 1: white
-            if (!Dictionary.Keys.Any(r => r.X == CurrentPosition.X && r.Y == CurrentPosition.Y))
-            {
-                Dictionary.Add(CurrentPosition, new HullTile());
-            }
-
-            Dictionary[CurrentPosition] = new HullTile
-            {
-                Color = GetColorForNumber(colorToPaint)
-            };
+            CurrentPosition.Color = GetColorForNumber(colorToPaint);
 
             // Rotate robot
             Direction = GetDirectionFromNumber(turnDirection);
 
             // Move to the next position
-            CurrentPosition = GetNextRelativeHullPosition(CurrentPosition, Direction);
+            var nextHullPos = GetNextRelativeHullPosition(CurrentPosition.Position.Clone(), Direction);
+            
+            // Check if the tile exists
+            var existingTile = KnownTiles.FirstOrDefault(h =>
+                h.Position.X == CurrentPosition.Position.X && h.Position.Y == CurrentPosition.Position.Y);
 
-            // Add this one aswell
-            if (!Dictionary.Keys.Any(r => r.X == CurrentPosition.X && r.Y == CurrentPosition.Y))
+            if (existingTile != null)
             {
-                Dictionary.Add(CurrentPosition, new HullTile());
+                KnownTiles = KnownTiles.Where(t => t.Position.X != existingTile.Position.X || t.Position.Y != existingTile.Position.Y).ToList();
             }
+            KnownTiles.Add(new HullTile
+            {
+                Position = nextHullPos.Clone()
+            });
         }
         public Position GetNextRelativeHullPosition(Position currentPos, Direction direction)
         {
@@ -159,10 +157,11 @@ namespace AOC_11_1
 
     public class HullTile
     {
+        public Position Position { get; set; } = new Position();
         public Color Color { get; set; } = Color.Black;
     }
 
-    public class Position
+    public class Position : IEquatable<Position>
     {
         public int X { get; set; }
         public int Y { get; set; }
@@ -173,22 +172,23 @@ namespace AOC_11_1
             return X == cast.X && Y == cast.Y;
         }
 
-        protected bool Equals(Position other)
+        public bool Equals(Position other)
         {
             return X == other.X && Y == other.Y;
         }
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return (X * 397) ^ Y;
-            }
+            return 0;
         }
 
-        public override string ToString()
+        public Position Clone()
         {
-            return base.ToString();
+            return new Position
+            {
+                Y = Y,
+                X = X
+            };
         }
     }
 
